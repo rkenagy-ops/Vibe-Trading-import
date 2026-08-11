@@ -252,6 +252,13 @@ from src.api.swarm_routes import _get_swarm_runtime  # noqa: F401, E402
 from src.api.live_routes import register_live_routes  # noqa: E402
 register_live_routes(app)
 
+# --- Read-only portfolio dashboard ---
+from src.api.portfolio_routes import register_portfolio_routes  # noqa: E402
+register_portfolio_routes(app)
+
+from src.api.connection_routes import register_connection_routes  # noqa: E402
+register_connection_routes(app)
+
 from src.api.live_routes import (  # noqa: F401, E402
     CommitMandateRequest,
     LiveHaltRequest,

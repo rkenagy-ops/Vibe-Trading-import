@@ -525,6 +525,35 @@ def test_binance_service_unconfigured(monkeypatch, tmp_path) -> None:
     assert result["connector"] == "binance"
 
 
+def test_binance_positions_replace_ld_wrappers_with_simple_earn(monkeypatch) -> None:
+    class FakeExchange:
+        def fetch_balance(self):
+            return {
+                "USDT": {"free": 12, "used": 0, "total": 12},
+                "LDBTC": {"free": 0, "used": 0.9, "total": 0.9},
+            }
+
+        def sapi_get_simple_earn_flexible_position(self, params):
+            assert params == {"size": 100}
+            return {"rows": [{"asset": "BTC", "totalAmount": "1.0"}]}
+
+    monkeypatch.setattr(bn, "_exchange", lambda _cfg: FakeExchange())
+    result = bn.get_positions(
+        bn.BinanceConfig(api_key="key", api_secret="secret", profile="live-readonly")
+    )
+
+    assert result["positions"] == [
+        {"symbol": "USDT", "quantity": 12.0, "free": 12.0, "used": 0.0, "source": "spot"},
+        {
+            "symbol": "BTC",
+            "quantity": 1.0,
+            "free": 0.0,
+            "used": 1.0,
+            "source": "simple_earn_flexible",
+        },
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # Futu (local OpenD gateway)
 # --------------------------------------------------------------------------- #
