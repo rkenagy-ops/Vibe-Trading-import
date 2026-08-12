@@ -127,7 +127,7 @@ export function Portfolio() {
     });
     const timer = window.setInterval(() => {
       void api.getPortfolioRefreshStatus()
-        .then((result) => setRefreshState(result.refresh))
+        .then((result) => setRefreshState(normalizeRefreshState(result.refresh)))
         .catch(() => undefined);
     }, 500);
     try {
@@ -136,7 +136,7 @@ export function Portfolio() {
       const points = await api.getPortfolioHistory();
       setHistory(points.history ?? []);
       const status = await api.getPortfolioRefreshStatus();
-      setRefreshState(status.refresh);
+      setRefreshState(normalizeRefreshState(status.refresh));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Refresh failed");
     } finally {
@@ -364,9 +364,25 @@ function Metric({ label, value, note, icon, tone }: { label: string; value: stri
   return <div className="rounded-xl border bg-card p-5"><div className="flex items-center justify-between text-xs text-muted-foreground"><span>{label}</span>{icon}</div><div className={`mt-3 text-2xl font-semibold tracking-tight ${toneClass}`}>{value}</div>{note ? <div className="mt-1 truncate text-xs text-muted-foreground" title={note}>{note}</div> : null}</div>;
 }
 
+function normalizeRefreshState(state: PortfolioRefreshState | null | undefined): PortfolioRefreshState {
+  const candidate = state?.sources ?? state?.brokers;
+  const sources = candidate && typeof candidate === "object" && !Array.isArray(candidate)
+    ? Object.fromEntries(Object.entries(candidate).map(([sourceId, item]) => [
+        sourceId,
+        item && typeof item === "object" ? item : { status: "pending" as const },
+      ]))
+    : {};
+  return {
+    running: Boolean(state?.running),
+    current: typeof state?.current === "string" ? state.current : null,
+    sources,
+    brokers: sources,
+  };
+}
+
 function RefreshProgress({ state, settings, zh }: { state: PortfolioRefreshState; settings: PortfolioSettings | null; zh: boolean }) {
   const labels = new Map(settings?.sources.map((source) => [source.connection_id, source.label]) ?? []);
-  const entries = Object.entries(state.sources ?? state.brokers ?? {});
+  const entries = Object.entries(normalizeRefreshState(state).sources ?? {});
   return <section className="rounded-lg border bg-card p-4"><div className="mb-3 flex items-center gap-2 text-sm font-medium"><Loader2 className="h-4 w-4 animate-spin text-primary" />{zh ? "正在依次读取已启用账户" : "Refreshing enabled accounts sequentially"}</div><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{entries.map(([sourceId, item]) => { const status = item.status ?? "pending"; return <div key={sourceId} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-xs"><span className="truncate font-medium" title={labels.get(sourceId) ?? sourceId}>{labels.get(sourceId) ?? sourceId}</span><span className={status === "ok" ? "text-positive" : status === "error" ? "text-danger" : "text-muted-foreground"}>{status === "refreshing" ? (zh ? "读取中" : "Reading") : status === "ok" ? (zh ? "完成" : "Done") : status === "error" ? (zh ? "失败" : "Failed") : (zh ? "等待" : "Waiting")}</span></div>; })}</div></section>;
 }
 

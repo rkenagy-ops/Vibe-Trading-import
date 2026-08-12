@@ -554,6 +554,28 @@ def test_binance_positions_replace_ld_wrappers_with_simple_earn(monkeypatch) -> 
     ]
 
 
+def test_binance_exchange_adjusts_for_server_time(monkeypatch) -> None:
+    captured = {}
+
+    class FakeExchange:
+        def __init__(self, config):
+            captured.update(config)
+
+        def set_sandbox_mode(self, enabled):
+            captured["sandbox"] = enabled
+
+    monkeypatch.setattr(bn, "_require_ccxt", lambda: SimpleNamespace(binance=FakeExchange))
+    monkeypatch.setattr(bn, "getproxies", lambda: {})
+
+    bn._exchange(bn.BinanceConfig(api_key="key", api_secret="secret", profile="live-readonly"))
+
+    assert captured["options"] == {
+        "adjustForTimeDifference": True,
+        "recvWindow": 10_000,
+    }
+    assert captured["sandbox"] is False
+
+
 # --------------------------------------------------------------------------- #
 # Futu (local OpenD gateway)
 # --------------------------------------------------------------------------- #

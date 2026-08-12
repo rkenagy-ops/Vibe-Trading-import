@@ -334,15 +334,27 @@ def serve_main(argv: list[str] | None = None) -> int:
     from starlette.exceptions import HTTPException as StarletteHTTPException
 
     class SPAStaticFiles(StaticFiles):
-        """Serve index.html for browser refreshes on client-side routes."""
+        """Serve SPA routes without allowing stale asset/index confusion."""
 
         async def get_response(self, path: str, scope: Dict[str, Any]):
             try:
-                return await super().get_response(path, scope)
+                response = await super().get_response(path, scope)
             except StarletteHTTPException as exc:
                 if exc.status_code != status.HTTP_404_NOT_FOUND:
                     raise
-                return await super().get_response("index.html", scope)
+                # A missing hashed bundle must be a real 404. Returning the SPA
+                # HTML with JavaScript's content type hides stale-browser bugs.
+                if path == "assets" or path.startswith("assets/"):
+                    raise
+                response = await super().get_response("index.html", scope)
+
+            content_type = response.headers.get("content-type", "")
+            if content_type.startswith("text/html"):
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+            elif path.startswith("assets/"):
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return response
 
     parser = argparse.ArgumentParser(description="Vibe-Trading Server")
     parser.add_argument("--port", type=int, default=8000, help="Listen port (default 8000)")

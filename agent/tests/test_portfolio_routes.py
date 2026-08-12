@@ -52,7 +52,9 @@ def test_portfolio_routes_are_readonly_and_return_expected_shapes(monkeypatch):
 
     assert client.get("/api/portfolio").json()["snapshot"]["snapshot_id"] == "latest"
     assert client.post("/api/portfolio/refresh").json()["snapshot"]["snapshot_id"] == "new"
-    assert client.get("/api/portfolio/refresh-status").json()["refresh"]["running"] is False
+    refresh = client.get("/api/portfolio/refresh-status").json()["refresh"]
+    assert refresh["running"] is False
+    assert refresh["sources"] == refresh["brokers"]
     assert client.get("/api/portfolio/history?limit=12").json()["history"][0]["limit"] == 12
     assert client.post("/api/portfolio/reconnect/ibkr").json()["authorized"] is True
     settings = client.get("/api/portfolio/settings").json()

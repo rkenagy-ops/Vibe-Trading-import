@@ -133,6 +133,29 @@ describe("Portfolio page", () => {
     await waitFor(() => expect(mocked.refreshPortfolio).toHaveBeenCalledTimes(1));
   });
 
+  it("keeps rendering when a legacy refresh response has a malformed source", async () => {
+    let finishRefresh!: (value: { status: string; snapshot: typeof snapshot }) => void;
+    mocked.refreshPortfolio.mockReturnValue(new Promise((resolve) => { finishRefresh = resolve; }));
+    mocked.getPortfolioRefreshStatus.mockResolvedValue({
+      status: "ok",
+      refresh: {
+        running: true,
+        current: "ibkr",
+        brokers: { ibkr: null },
+      },
+    });
+
+    render(<Portfolio />);
+    await screen.findByText("AAPL");
+    fireEvent.click(screen.getByRole("button", { name: /Refresh all|刷新全部账户/ }));
+
+    await waitFor(() => expect(mocked.getPortfolioRefreshStatus).toHaveBeenCalled(), { timeout: 2_000 });
+    expect(screen.getByRole("heading", { name: /Portfolio|持仓总览/ })).toBeInTheDocument();
+
+    finishRefresh({ status: "ok", snapshot });
+    await waitFor(() => expect(mocked.getPortfolioHistory).toHaveBeenCalledTimes(2));
+  });
+
   it("edits selected read-only accounts without collecting credentials", async () => {
     render(<Portfolio />);
     await screen.findByText("AAPL");

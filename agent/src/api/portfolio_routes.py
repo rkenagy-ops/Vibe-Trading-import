@@ -78,7 +78,12 @@ def register_portfolio_routes(app: FastAPI) -> None:
     @app.get("/api/portfolio/refresh-status", dependencies=[Depends(require_auth)])
     def portfolio_refresh_status():
         with _REFRESH_LOCK:
-            return {"status": "ok", "refresh": deepcopy(_REFRESH_STATE)}
+            refresh = deepcopy(_REFRESH_STATE)
+            # ``brokers`` was the original dashboard field name. Keep it as a
+            # compatibility alias so an already-open frontend can safely poll
+            # a newer backend while its cached assets are being replaced.
+            refresh["brokers"] = deepcopy(refresh["sources"])
+            return {"status": "ok", "refresh": refresh}
 
     @app.post("/api/portfolio/reconnect/ibkr", dependencies=[Depends(require_auth)])
     def reconnect_ibkr():

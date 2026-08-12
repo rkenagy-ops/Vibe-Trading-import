@@ -143,7 +143,7 @@ export interface PortfolioHistoryPoint {
 export interface PortfolioRefreshState {
   running: boolean;
   current: string | null;
-  sources: Record<string, { status: "idle" | "pending" | "refreshing" | "ok" | "error"; error?: string | null }>;
+  sources?: Record<string, { status: "idle" | "pending" | "refreshing" | "ok" | "error"; error?: string | null }>;
   brokers?: Record<string, { status: "idle" | "pending" | "refreshing" | "ok" | "error"; error?: string | null }>;
 }
 

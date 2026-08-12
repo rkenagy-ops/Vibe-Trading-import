@@ -667,6 +667,14 @@ def _exchange(cfg: BinanceConfig):
         "secret": cfg.api_secret,
         "enableRateLimit": True,
         "timeout": int(cfg.timeout * 1000),
+        # Signed Binance requests have a narrow timestamp window. Let ccxt
+        # measure the exchange clock before the first private request so a
+        # sleeping laptop or an imperfect system clock does not force users to
+        # reconnect or recreate an otherwise valid read-only API key.
+        "options": {
+            "adjustForTimeDifference": True,
+            "recvWindow": 10_000,
+        },
     }
     # ``requests``/ccxt does not consistently inherit the macOS System Proxy.
     # urllib resolves both conventional proxy environment variables and the
