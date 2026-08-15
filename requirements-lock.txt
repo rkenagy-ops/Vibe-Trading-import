@@ -2231,9 +2231,9 @@ oauth-cli-kit==0.1.6 \
     --hash=sha256:7252f57e1a2f9dba7a94894c11b979f83884b3c88af3b4fe0206370a2b120499 \
     --hash=sha256:d4a73beae7333ae642a9e5766ab0a04de53279667fefdf064c23db77a3494e7f
     # via -r agent/requirements.txt
-openai==2.53.0 \
-    --hash=sha256:baf5802ad08980e1d9d561e1b996e800c8bcd14af5847c6d0e7a5cc59e4d4116 \
-    --hash=sha256:c694ffc747a3c4d1663ef2b07b811315a476164ee5efa3a993967349ebca7618
+openai==3.0.0 \
+    --hash=sha256:8d32ac3a6647a66910d6cb8a64f0fa5a6c823604b6e82db83d9d055c6709bd51 \
+    --hash=sha256:ffd00ef1678d70957e1f1ed98d5bfcf1d661f41ea4482f22e7d0144a66435a49
     # via langchain-openai
 openapi-pydantic==0.5.1 \
     --hash=sha256:a3a09ef4586f5bd760a8df7f43028b60cafb6d9f61de2acba9574766255ab146 \
